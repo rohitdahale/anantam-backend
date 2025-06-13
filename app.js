@@ -12,6 +12,8 @@ const userRoutes = require('./routes/user');
 const contactRoutes = require('./routes/contact');
 const aboutRoutes = require('./routes/about');
 const productRoutes = require('./routes/products');
+const userClientRoutes = require('./routes/users.client'); // Add this line
+const orderRoutes = require('./routes/orders');
 
 const app = express();
 
@@ -50,6 +52,8 @@ app.use('/api/users', userRoutes);
 app.use('/api', contactRoutes);
 app.use('/api/about', aboutRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/users', userClientRoutes); // Add this line (or '/api/user' if you named the file user.js)
+app.use('/api/orders', orderRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

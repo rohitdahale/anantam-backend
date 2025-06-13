@@ -26,18 +26,56 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /api/products - Create new product
-router.post('/', upload.single('image'), async (req, res) => {
-  try {
-    console.log('Request body:', req.body);
-    console.log('Uploaded file:', req.file);
+// Add this route to your existing Express router file (after the GET '/' route)
 
-    const { name, category, price, stock, status } = req.body;
+// GET /api/products/:id - Fetch single product by ID
+router.get('/:id', async (req, res) => {
+  try {
+    const productId = req.params.id;
+    
+    // Validate ObjectId format (if using MongoDB)
+    if (!productId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ error: 'Invalid product ID format' });
+    }
+    
+    const product = await Product.findById(productId);
+    
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
+    
+    res.status(200).json(product);
+  } catch (err) {
+    console.error('Error fetching product:', err);
+    res.status(500).json({ error: 'Failed to fetch product' });
+  }
+});
+
+// POST /api/products - Create new product
+router.post('/', upload.array('images', 5), async (req, res) => {
+  try {
+    const {
+      name,
+      category,
+      price,
+      stock,
+      status,
+      description,
+      features,
+      specifications,
+      brand
+    } = req.body;
 
     // Validation
-    if (!name || !category || !price || !stock) {
+    if (!name || !category || !price || !stock || !description) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
+
+    const featureArray = typeof features === 'string' ? features.split(',').map(f => f.trim()) : [];
+    const specObject = typeof specifications === 'string' ? JSON.parse(specifications) : {};
+
+    const imageUrls = req.files.map(file => file.secure_url || file.path);
+    const mainImage = imageUrls.length > 0 ? imageUrls[0] : '';
 
     const newProduct = new Product({
       name,
@@ -45,11 +83,15 @@ router.post('/', upload.single('image'), async (req, res) => {
       price: parseFloat(price),
       stock: parseInt(stock),
       status: status || 'In Stock',
-      imageUrl: req.file ? req.file.secure_url || req.file.path : '',
+      description,
+      features: featureArray,
+      specifications: specObject,
+      brand: brand || '',
+      imageUrl: mainImage,
+      additionalImages: imageUrls.slice(1),
     });
 
     const savedProduct = await newProduct.save();
-    console.log('Product saved successfully:', savedProduct);
     res.status(201).json(savedProduct);
   } catch (err) {
     console.error('Error creating product:', err);
@@ -61,19 +103,42 @@ router.post('/', upload.single('image'), async (req, res) => {
 });
 
 // PUT /api/products/:id - Update product
-router.put('/:id', upload.single('image'), async (req, res) => {
+router.put('/:id', upload.array('images', 5), async (req, res) => {
   try {
-    const { name, category, price, stock, status } = req.body;
+    const {
+      name,
+      category,
+      price,
+      stock,
+      status,
+      description,
+      features,
+      specifications,
+      brand
+    } = req.body;
+
     const updateData = {
       name,
       category,
       price: parseFloat(price),
       stock: parseInt(stock),
       status,
+      description,
+      brand
     };
 
-    if (req.file) {
-      updateData.imageUrl = req.file.secure_url || req.file.path;
+    if (features) {
+      updateData.features = typeof features === 'string' ? features.split(',').map(f => f.trim()) : [];
+    }
+
+    if (specifications) {
+      updateData.specifications = typeof specifications === 'string' ? JSON.parse(specifications) : {};
+    }
+
+    if (req.files && req.files.length > 0) {
+      const imageUrls = req.files.map(file => file.secure_url || file.path);
+      updateData.imageUrl = imageUrls[0];
+      updateData.additionalImages = imageUrls.slice(1);
     }
 
     const updatedProduct = await Product.findByIdAndUpdate(

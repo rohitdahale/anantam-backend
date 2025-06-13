@@ -74,7 +74,7 @@ router.post(
             </div>
             
             <div style="background-color: #1a1a1a; color: #888; padding: 20px; text-align: center; font-size: 12px;">
-              <p style="margin: 0;">This email was sent from the Anantam Aerial contact form.</p>
+              <p style="margin: 0;">This email was sent from the Anantam Aerials and Robotics contact form.</p>
               <p style="margin: 5px 0 0 0;">Please respond to: ${email}</p>
             </div>
           </div>
@@ -85,11 +85,11 @@ router.post(
       const userEmailOptions = {
         from: `"Anantam Aerial" <${process.env.EMAIL_USER || 'rohitdahale23@gmail.com'}>`,
         to: email,
-        subject: 'Thank you for contacting Anantam Aerial - We\'ve received your message',
+        subject: 'Thank you for contacting Anantam Aerials and Robotics - We\'ve received your message',
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background-color: #1a1a1a; color: white; padding: 30px; text-align: center;">
-              <h1 style="margin: 0; color: #3b82f6;">Anantam Aerial</h1>
+              <h1 style="margin: 0; color: #3b82f6;">Anantam Aerials and Robotics</h1>
               <p style="margin: 10px 0 0 0; color: #ccc;">Drone & Robotics Solutions</p>
             </div>
             
@@ -122,7 +122,7 @@ router.post(
               <div style="background-color: #e3f2fd; padding: 20px; border-radius: 8px; margin: 25px 0;">
                 <h4 style="color: #1976d2; margin: 0 0 10px 0;">Contact Information</h4>
                 <p style="margin: 5px 0; color: #555;"><strong>📍 Address:</strong> 123 Drone Avenue, Tech Park, Bangalore - 560001</p>
-                <p style="margin: 5px 0; color: #555;"><strong>📧 Email:</strong> info@anantamaerial.com</p>
+                <p style="margin: 5px 0; color: #555;"><strong>📧 Email:</strong> info@anantamaerialsandrobotics.com</p>
                 <p style="margin: 5px 0; color: #555;"><strong>📞 Phone:</strong> +91 98765 43210</p>
                 <p style="margin: 5px 0; color: #555;"><strong>🕒 Hours:</strong> Mon-Fri 9AM-6PM, Sat 10AM-4PM</p>
               </div>
@@ -136,7 +136,7 @@ router.post(
               <p style="margin: 0 0 10px 0; color: #ccc;">Follow us for updates:</p>
               <p style="margin: 0; font-size: 12px;">
                 This is an automated confirmation email. Please do not reply to this email.
-                <br>For any questions, contact us at info@anantamaerial.com
+                <br>For any questions, contact us at info@anantamaerialsandrobotics.com
               </p>
             </div>
           </div>
