@@ -12,8 +12,9 @@ const userRoutes = require('./routes/user');
 const contactRoutes = require('./routes/contact');
 const aboutRoutes = require('./routes/about');
 const productRoutes = require('./routes/products');
-const userClientRoutes = require('./routes/users.client'); // Add this line
+const userClientRoutes = require('./routes/users.client');
 const orderRoutes = require('./routes/orders');
+const workshopRoutes = require('./routes/workshop'); // Add this line
 
 const app = express();
 
@@ -52,8 +53,9 @@ app.use('/api/users', userRoutes);
 app.use('/api', contactRoutes);
 app.use('/api/about', aboutRoutes);
 app.use('/api/products', productRoutes);
-app.use('/api/users', userClientRoutes); // Add this line (or '/api/user' if you named the file user.js)
+app.use('/api/users', userClientRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/workshops', workshopRoutes); // Add this line
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -78,3 +80,5 @@ mongoose.connect(process.env.MONGO_URI, {
 .catch(err => {
   console.error('Database connection error:', err);
 });
+
+module.exports = app;

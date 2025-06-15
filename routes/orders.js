@@ -5,6 +5,7 @@ const crypto = require('crypto');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const mongoose = require('mongoose');
+const authMiddleware = require('../middleware/auth'); // Adjust path as needed
 
 // Initialize Razorpay
 const razorpay = new Razorpay({
@@ -195,6 +196,138 @@ router.post('/verify', async (req, res) => {
   }
 });
 
+// GET /api/orders/my - Get all orders (for admin) - MOVED BEFORE THE GENERIC ROUTES
+router.get('/my', authMiddleware, async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    
+    // Build filter object
+    const filter = {};
+    
+    // Add status filter if provided
+    if (req.query.status && req.query.status !== 'all') {
+      filter.status = req.query.status;
+    }
+    
+    // Add delivery status filter if provided
+    if (req.query.deliveryStatus && req.query.deliveryStatus !== 'all') {
+      filter.deliveryStatus = req.query.deliveryStatus;
+    }
+
+    // Build sort object
+    const sortField = req.query.sortBy || 'createdAt';
+    const sortOrder = req.query.sortOrder === 'asc' ? 1 : -1;
+    const sort = { [sortField]: sortOrder };
+
+    const orders = await Order.find(filter)
+      .populate('items.productId')
+      .sort(sort)
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Order.countDocuments(filter);
+
+    res.status(200).json({
+      success: true,
+      orders,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch orders',
+      details: error.message 
+    });
+  }
+});
+
+// GET /api/orders/export - Export orders to CSV
+router.get('/export', authMiddleware, async (req, res) => {
+  try {
+    const orders = await Order.find()
+      .populate('items.productId')
+      .sort({ createdAt: -1 });
+
+    // Create CSV content
+    const csvHeader = 'Order ID,Customer Name,Email,Phone,Total Amount,Status,Delivery Status,Items,Created At\n';
+    const csvRows = orders.map(order => {
+      const items = order.items.map(item => `${item.name} (${item.quantity})`).join('; ');
+      return [
+        order.orderId,
+        order.customerInfo.name,
+        order.customerInfo.email,
+        order.customerInfo.phone,
+        order.totalAmount,
+        order.status,
+        order.deliveryStatus,
+        `"${items}"`,
+        new Date(order.createdAt).toLocaleDateString()
+      ].join(',');
+    }).join('\n');
+
+    const csvContent = csvHeader + csvRows;
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="orders.csv"');
+    res.send(csvContent);
+
+  } catch (error) {
+    console.error('Error exporting orders:', error);
+    res.status(500).json({ 
+      error: 'Failed to export orders',
+      details: error.message 
+    });
+  }
+});
+
+// GET /api/orders/user - Get user's own orders
+router.get('/user', authMiddleware, async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Find orders by user's email (assuming you store email in customerInfo)
+    const orders = await Order.find({ 
+      'customerInfo.email': req.user.email
+    })
+      .populate('items.productId')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Order.countDocuments({ 
+      'customerInfo.email': req.user.email 
+    });
+
+    res.status(200).json({
+      success: true,
+      orders,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching user orders:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch orders',
+      details: error.message 
+    });
+  }
+});
+
 // GET /api/orders/:id - Get order details
 router.get('/:id', async (req, res) => {
   try {
@@ -228,43 +361,8 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// GET /api/orders - Get all orders (for admin)
-router.get('/', async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
-
-    const orders = await Order.find()
-      .populate('items.productId')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    const total = await Order.countDocuments();
-
-    res.status(200).json({
-      success: true,
-      orders,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit)
-      }
-    });
-
-  } catch (error) {
-    console.error('Error fetching orders:', error);
-    res.status(500).json({ 
-      error: 'Failed to fetch orders',
-      details: error.message 
-    });
-  }
-});
-
 // PUT /api/orders/:id/status - Update order delivery status
-router.put('/:id/status', async (req, res) => {
+router.put('/:id/status', authMiddleware, async (req, res) => {
   try {
     const { id } = req.params;
     const { deliveryStatus } = req.body;
