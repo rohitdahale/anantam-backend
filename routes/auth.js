@@ -14,15 +14,22 @@ router.get('/google/callback',
   passport.authenticate('google', { failureRedirect: 'http://localhost:5173/login?error=auth_failed' }),
   (req, res) => {
     // Generate JWT token for Google authenticated user
-    const token = jwt.sign({ id: req.user._id }, process.env.JWT_SECRET, {
+    const token = jwt.sign({ id: req.user._id,    role: req.user.role 
+    }, process.env.JWT_SECRET, {
       expiresIn: '1d',
     });
     
+    // Determine redirect URL based on user role
+  const redirectUrl = req.user.role === 'admin' 
+  ? 'http://localhost:5173/admin' 
+  : 'http://localhost:5173/';
+
     // Redirect to frontend with token as query parameter
     res.redirect(`http://localhost:5173/auth/success?token=${token}&user=${encodeURIComponent(JSON.stringify({
       id: req.user._id,
       name: req.user.name,
-      email: req.user.email
+      email: req.user.email,
+      role: req.user.role // include role here too
     }))}`);
   });
 

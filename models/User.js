@@ -33,6 +33,12 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+   // 🆕 Add this field
+   role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user' // default role
+  },
   // Track creation and update times
   createdAt: {
     type: Date,
