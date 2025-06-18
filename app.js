@@ -22,6 +22,9 @@ const productRoutes = require('./routes/products');
 const userClientRoutes = require('./routes/users.client');
 const orderRoutes = require('./routes/orders');
 const workshopRoutes = require('./routes/workshop');
+const serviceRoutes = require('./routes/services');
+const collaboratorRoutes = require('./routes/collaborators');
+
 
 const app = express();
 
@@ -29,7 +32,7 @@ const app = express();
 
 // CORS config
 app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000'],
+  origin: ['http://localhost:5173', 'http://localhost:3000', 'https://anantamaerialsandrobotics.com'],
   credentials: true
 }));
 
@@ -66,6 +69,8 @@ app.use('/api/products', productRoutes);    // Products listing
 app.use('/api/users', userClientRoutes);    // Public user-facing routes
 app.use('/api/orders', orderRoutes);        // Orders
 app.use('/api/workshops', workshopRoutes);  // Workshops
+app.use('/api/services', serviceRoutes);
+app.use('/api/collaborators', collaboratorRoutes);
 
 // --- GLOBAL ERROR HANDLER ---
 app.use((err, req, res, next) => {
