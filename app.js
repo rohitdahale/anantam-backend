@@ -66,11 +66,12 @@ app.use('/api/users', userRoutes);          // Admin/user management
 app.use('/api', contactRoutes);             // Contact form or feedback
 app.use('/api/about', aboutRoutes);         // About page data
 app.use('/api/products', productRoutes);    // Products listing
-app.use('/api/users', userClientRoutes);    // Public user-facing routes
+app.use('/api/user', userClientRoutes);    // Public user-facing routes
 app.use('/api/orders', orderRoutes);        // Orders
 app.use('/api/workshops', workshopRoutes);  // Workshops
 app.use('/api/services', serviceRoutes);
 app.use('/api/collaborators', collaboratorRoutes);
+// Make sure you have this line
 
 // --- GLOBAL ERROR HANDLER ---
 app.use((err, req, res, next) => {
