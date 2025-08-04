@@ -8,7 +8,7 @@ exports.getAllWorkshops = async (req, res) => {
     res.json(workshops);
   } catch (error) {
     console.error('Error fetching workshops:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to fetch workshops',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -18,23 +18,25 @@ exports.getAllWorkshops = async (req, res) => {
 // Get workshop by ID (public)
 exports.getWorkshopById = async (req, res) => {
   try {
-    const workshop = await Workshop.findOne({ _id: req.params.id, isActive: true });
-    
+    const workshop = await Workshop.findOne({
+      _id: req.params.id,
+      isActive: true
+    });
+
     if (!workshop) {
       return res.status(404).json({ error: 'Workshop not found' });
     }
-    
+
     res.json(workshop);
   } catch (error) {
     console.error('Error fetching workshop:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to fetch workshop',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
 
-// Register for workshop (requires authentication)
 // Register for workshop (for offline payments or admin registrations)
 exports.registerForWorkshop = async (req, res) => {
   try {
@@ -65,7 +67,9 @@ exports.registerForWorkshop = async (req, res) => {
     });
 
     if (existingRegistration) {
-      return res.status(400).json({ error: 'You are already registered for this workshop on the selected date' });
+      return res.status(400).json({
+        error: 'You are already registered for this workshop on the selected date'
+      });
     }
 
     // Set default payment info for offline registrations
@@ -93,16 +97,15 @@ exports.registerForWorkshop = async (req, res) => {
     // Populate workshop details for response
     await registration.populate('workshop');
 
-    res.status(201).json({ 
-      message: 'Registration successful', 
-      registration 
+    res.status(201).json({
+      message: 'Registration successful',
+      registration
     });
-
   } catch (error) {
     console.error('Error registering for workshop:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to register for workshop',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined 
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
@@ -110,14 +113,16 @@ exports.registerForWorkshop = async (req, res) => {
 // Get user's workshop registrations (requires authentication)
 exports.getUserRegistrations = async (req, res) => {
   try {
-    const registrations = await WorkshopRegistration.find({ user: req.user._id })
-      .populate('workshop')
-      .sort({ createdAt: -1 });
+    const registrations = await WorkshopRegistration.find({
+      user: req.user._id
+    })
+    .populate('workshop')
+    .sort({ createdAt: -1 });
 
     res.json(registrations);
   } catch (error) {
     console.error('Error fetching user registrations:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to fetch registrations',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -140,8 +145,8 @@ exports.cancelRegistration = async (req, res) => {
     }
 
     if (!registration.canCancel()) {
-      return res.status(400).json({ 
-        error: 'Registration cannot be cancelled at this time' 
+      return res.status(400).json({
+        error: 'Registration cannot be cancelled at this time'
       });
     }
 
@@ -153,7 +158,6 @@ exports.cancelRegistration = async (req, res) => {
     registration.cancellationDate = new Date();
     registration.cancellationReason = reason || 'User requested cancellation';
     registration.refundAmount = refundAmount;
-    
     await registration.save();
 
     // Increase available spots
@@ -166,10 +170,9 @@ exports.cancelRegistration = async (req, res) => {
       refundAmount,
       registration
     });
-
   } catch (error) {
     console.error('Error cancelling registration:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to cancel registration',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -185,14 +188,14 @@ exports.adminGetAllWorkshops = async (req, res) => {
     res.json(workshops);
   } catch (error) {
     console.error('Error fetching workshops for admin:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to fetch workshops',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
 
-// Create new workshop (admin)
+// Create new workshop (admin) - UPDATED: This is now handled in routes with image upload
 exports.createWorkshop = async (req, res) => {
   try {
     const workshop = new Workshop(req.body);
@@ -203,14 +206,14 @@ exports.createWorkshop = async (req, res) => {
     });
   } catch (error) {
     console.error('Error creating workshop:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to create workshop',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };
 
-// Update workshop (admin)
+// Update workshop (admin) - UPDATED: This is now handled in routes with image upload
 exports.updateWorkshop = async (req, res) => {
   try {
     const workshop = await Workshop.findByIdAndUpdate(
@@ -229,7 +232,7 @@ exports.updateWorkshop = async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating workshop:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to update workshop',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -251,7 +254,7 @@ exports.deleteWorkshop = async (req, res) => {
     res.json({ message: 'Workshop deleted successfully' });
   } catch (error) {
     console.error('Error deleting workshop:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to delete workshop',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -276,7 +279,7 @@ exports.toggleWorkshopStatus = async (req, res) => {
     });
   } catch (error) {
     console.error('Error toggling workshop status:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to update workshop status',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -287,7 +290,7 @@ exports.toggleWorkshopStatus = async (req, res) => {
 exports.adminGetAllRegistrations = async (req, res) => {
   try {
     const { workshopId, status, page = 1, limit = 10 } = req.query;
-    
+
     const filter = {};
     if (workshopId) filter.workshop = workshopId;
     if (status) filter.registrationStatus = status;
@@ -309,7 +312,7 @@ exports.adminGetAllRegistrations = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching registrations for admin:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to fetch registrations',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
@@ -320,7 +323,7 @@ exports.adminGetAllRegistrations = async (req, res) => {
 exports.updateRegistrationStatus = async (req, res) => {
   try {
     const { status, notes } = req.body;
-    
+
     const registration = await WorkshopRegistration.findById(req.params.id)
       .populate('workshop')
       .populate('user');
@@ -331,11 +334,11 @@ exports.updateRegistrationStatus = async (req, res) => {
 
     const oldStatus = registration.registrationStatus;
     registration.registrationStatus = status;
-    
+
     if (status === 'confirmed' && oldStatus !== 'confirmed') {
       registration.confirmationDate = new Date();
     }
-    
+
     if (notes) {
       registration.notes = notes;
     }
@@ -348,7 +351,7 @@ exports.updateRegistrationStatus = async (req, res) => {
     });
   } catch (error) {
     console.error('Error updating registration status:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to update registration status',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });

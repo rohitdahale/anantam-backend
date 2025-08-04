@@ -19,10 +19,25 @@ const authMiddleware = require('../middleware/auth');
 const Workshop = require('../models/Workshop');
 const WorkshopRegistration = require('../models/WorkshopRegistration');
 
+// ADD MULTER AND CLOUDINARY IMPORTS
+const multer = require('multer');
+const cloudinary = require('../utils/cloudinary');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 
 const router = express.Router();
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
+
+// Configure Cloudinary storage for workshops
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: 'workshops',
+    allowed_formats: ['jpg', 'png', 'jpeg'],
+  },
+});
+
+const upload = multer({ storage });
 
 // Initialize Razorpay
 const razorpay = new Razorpay({
@@ -85,12 +100,11 @@ router.post('/payment/create', authMiddleware, async (req, res) => {
       },
       razorpayKey: process.env.RAZORPAY_KEY_ID
     });
-
   } catch (error) {
     console.error('Error creating payment order:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to create payment order',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined 
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
@@ -98,13 +112,13 @@ router.post('/payment/create', authMiddleware, async (req, res) => {
 // Verify payment and complete registration
 router.post('/payment/verify', authMiddleware, async (req, res) => {
   try {
-    const { 
-      razorpay_order_id, 
-      razorpay_payment_id, 
-      razorpay_signature, 
-      workshopId, 
-      selectedDate, 
-      participantInfo 
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      workshopId,
+      selectedDate,
+      participantInfo
     } = req.body;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
@@ -163,12 +177,11 @@ router.post('/payment/verify', authMiddleware, async (req, res) => {
       message: 'Payment verified and registration successful',
       registration
     });
-
   } catch (error) {
     console.error('Error verifying payment:', error);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Failed to verify payment',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined 
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
@@ -184,8 +197,66 @@ router.put('/user/registrations/:registrationId/cancel', authMiddleware, cancelR
 
 // ADMIN ROUTES (no authentication required as per request)
 router.get('/admin/workshops', adminGetAllWorkshops);
-router.post('/admin/workshops', createWorkshop);
-router.put('/admin/workshops/:id', updateWorkshop);
+
+// Updated admin routes with image upload support
+router.post('/admin/workshops', upload.single('image'), async (req, res) => {
+  try {
+    const workshopData = { ...req.body };
+    
+    // If image was uploaded, use the Cloudinary URL
+    if (req.file) {
+      workshopData.image = req.file.secure_url || req.file.path;
+    }
+    
+    const workshop = new Workshop(workshopData);
+    await workshop.save();
+    
+    res.status(201).json({ 
+      message: 'Workshop created successfully', 
+      workshop 
+    });
+  } catch (error) {
+    console.error('Error creating workshop:', error);
+    res.status(500).json({ 
+      error: 'Failed to create workshop', 
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined 
+    });
+  }
+});
+
+router.put('/admin/workshops/:id', upload.single('image'), async (req, res) => {
+  try {
+    const updateData = { ...req.body };
+    
+    // If new image was uploaded, use the Cloudinary URL
+    if (req.file) {
+      updateData.image = req.file.secure_url || req.file.path;
+    }
+    
+    const workshop = await Workshop.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+    
+    if (!workshop) {
+      return res.status(404).json({ error: 'Workshop not found' });
+    }
+    
+    res.json({ 
+      message: 'Workshop updated successfully', 
+      workshop 
+    });
+  } catch (error) {
+    console.error('Error updating workshop:', error);
+    res.status(500).json({ 
+      error: 'Failed to update workshop', 
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined 
+    });
+  }
+});
+
+// Keep the original routes for backwards compatibility
 router.delete('/admin/workshops/:id', deleteWorkshop);
 router.patch('/admin/workshops/:id/toggle-status', toggleWorkshopStatus);
 
