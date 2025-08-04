@@ -203,6 +203,28 @@ router.post('/admin/workshops', upload.single('image'), async (req, res) => {
   try {
     const workshopData = { ...req.body };
     
+    // Parse JSON fields that come as strings from FormData
+    if (workshopData.upcoming && typeof workshopData.upcoming === 'string') {
+      try {
+        workshopData.upcoming = JSON.parse(workshopData.upcoming);
+      } catch (parseError) {
+        return res.status(400).json({ error: 'Invalid upcoming data format' });
+      }
+    }
+    
+    if (workshopData.curriculum && typeof workshopData.curriculum === 'string') {
+      try {
+        workshopData.curriculum = JSON.parse(workshopData.curriculum);
+      } catch (parseError) {
+        return res.status(400).json({ error: 'Invalid curriculum data format' });
+      }
+    }
+    
+    // Parse numeric fields
+    if (workshopData.capacity && typeof workshopData.capacity === 'string') {
+      workshopData.capacity = parseInt(workshopData.capacity);
+    }
+    
     // If image was uploaded, use the Cloudinary URL
     if (req.file) {
       workshopData.image = req.file.secure_url || req.file.path;
@@ -227,6 +249,28 @@ router.post('/admin/workshops', upload.single('image'), async (req, res) => {
 router.put('/admin/workshops/:id', upload.single('image'), async (req, res) => {
   try {
     const updateData = { ...req.body };
+    
+    // Parse JSON fields that come as strings from FormData
+    if (updateData.upcoming && typeof updateData.upcoming === 'string') {
+      try {
+        updateData.upcoming = JSON.parse(updateData.upcoming);
+      } catch (parseError) {
+        return res.status(400).json({ error: 'Invalid upcoming data format' });
+      }
+    }
+    
+    if (updateData.curriculum && typeof updateData.curriculum === 'string') {
+      try {
+        updateData.curriculum = JSON.parse(updateData.curriculum);
+      } catch (parseError) {
+        return res.status(400).json({ error: 'Invalid curriculum data format' });
+      }
+    }
+    
+    // Parse numeric fields
+    if (updateData.capacity && typeof updateData.capacity === 'string') {
+      updateData.capacity = parseInt(updateData.capacity);
+    }
     
     // If new image was uploaded, use the Cloudinary URL
     if (req.file) {
